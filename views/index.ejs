@@ -1,0 +1,66 @@
+<%- include('header2', {title: 'lunchRoulette'}); %> 
+
+<div class="p-10 bg-surface-secondary">
+  <div class="container">
+    <div class="row">
+      <div class="col">
+        <img class="w-100 mb-3" src="https://media.istockphoto.com/photos/collage-of-food-products-picture-id854033828?k=20&m=854033828&s=612x612&w=0&h=2vZ0k6ebQSX_YyPrViklurmzfIQL0tZxHds6KkrAJdk=">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h4>Lunch Groups Available</h4>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover table-nowrap">
+          <thead class="table-light thead-light">
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Group</th>
+              <th scope="col">Venue</th>
+              <th scope="col">Created by</th>
+              <th scope="col">Members</th>
+              <th></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% groupData.forEach((element) => { %>
+            <tr>
+              <td>
+                <span><%= element.meeting_date %></span>
+              </td>
+              <td>
+                <span><%= element.title %></span>
+              </td>
+              <td>
+                <span><%= element.venue_name %></span>
+              </td>
+              <td>
+                <span><img title="<%= element.first_name %>" alt="<%= element.first_name%>" src="/<%= element.photo %>" class="avatar avatar-sm rounded-circle me-2"></span>
+              </td>
+              <td><%= element.num_members%>/<%= element.max_capacity %></td>
+              <td>
+                <a href="/group/<%= element.id %>"><i class="fas fa-info-circle"></i></a>
+              </td>
+              <td>
+                <% if(element.creator_id == userProfile.userId) { %>
+                  <span class="p-1 bg-info text-white rounded-border"><strong>Owner</strong></span>
+                <% } else if(element.num_members == element.max_capacity) { %>
+                  <span><strong>Full</strong></span>
+                <% } else { %>
+                    <a href="/group/<%= element.id %>/join"><i class="fas fa-sign-in-alt"></i></a>
+                <% }; %>
+              </td>
+            </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('footer'); %> 

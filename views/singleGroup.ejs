@@ -1,0 +1,46 @@
+<%- include('header2', {title: 'Group Details'}); %> 
+
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <div class="card bg-light">
+        <div class="card-header">
+          <%= mainData[0].title %> 
+        </div>
+
+        <div class="card-body">
+          <h5 class="card-title">Date</h5>
+          <p class="card-text mb-4"><%= mainData[0].meeting_date %></p>
+        </div>
+
+        <div class="card-body">
+          <h5 class="card-title">Time</h5>
+          <p class="card-text mb-4"><%= mainData[0].meeting_time %></p>
+        </div>
+
+        <div class="card-body">
+          <h5 class="card-title">Description</h5>
+          <p class="card-text mb-4"><%= mainData[0].description %></p>
+        </div>
+
+        <div class="card-body">
+          <h5 class="card-title">Venue</h5>
+          <p class="card-text"><%= mainData[0].venue_name %></p>
+          <p class="card-text mb-4"><%= mainData[0].address %></p>
+        </div>
+
+        <div class="card-body">
+          <h5 class="card-title">People you will meet</h5>
+          <img title="<%= mainData[0].creator_first_name %>" alt="<%= mainData[0].creator_first_name%>" src="/<%= mainData[0].creator_photo %>" class="avatar avatar-sm rounded-circle me-2">
+          <% memberData.forEach((element) => { %>
+            <img title="<%= element.first_name %>" alt="<%= element.first_name%>" src="/<%= element.photo %>" class="avatar avatar-sm rounded-circle me-2">
+
+          <% }); %> 
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+<%- include('footer'); %> 

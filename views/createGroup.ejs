@@ -1,0 +1,67 @@
+<%- include('header2', {title: 'Create Group'});%> 
+
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <form action="/creategroup" method="POST">
+        <div class="form-group">
+          <label for="title">Title:</label><br />
+          <input
+            class="form-control"
+            type="text"
+            id="title"
+            name="title"
+            required
+          /><br />
+
+          <label for="date">Meeting Date:</label><br />
+          <input class="form-control" type="date" id="meeting_date" name="meeting_date"
+          required /><br />
+
+          <label for="meeting_time">Meeting Time:</label><br />
+          <input
+            class="form-control"
+            type="time"
+            id="meeting_time"
+            name="meeting_time"
+            min="11:00"
+            max="14:00"
+            required
+          /><br />
+
+          <label for="description">Description:</label><br />
+          <textarea
+            class="form-control"
+            type="text"
+            id="description"
+            name="description"
+          ></textarea> <br />
+
+          <label for="venue_id">Venue:</label><br />
+          <select
+            class="form-control"
+            id="venue_id"
+            name="venue_id"
+          >
+            <% venuesList.forEach((element) => { %>
+              <option value="<%= element.id%>"><%= element.venue_name %> </option>
+            <% }); %> 
+          </select><br />
+
+          <label for="max_capacity">Max Capacity:</label><br />
+          <input
+            class="form-control"
+            type="text"
+            id="max_capacity"
+            name="max_capacity"
+            required
+          /><br />
+
+          <input class="btn btn-secondary" type="submit" value="Submit" /><br />
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('footer'); %> 
