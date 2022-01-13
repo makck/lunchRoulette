@@ -4,6 +4,7 @@ import pg from 'pg';
 import jsSHA from 'jssha';
 import cookieParser from 'cookie-parser';
 import multer from 'multer';
+import moment from 'moment';
 
 const { Pool } = pg;
 const pgConnectConfigs = {
@@ -52,9 +53,9 @@ app.use(methodOverride('_method'));
 app.use(cookieParser());
 
 // Route to index (list of groups)
-app.get('/', (req, res) => {
+app.get('/', checkAuth, (req, res) => {
   if (req.isUSerLoggedIn === false) {
-    res.status(403).send('sorry');
+    res.status(403).redirect('/login');
     return;
   }
 
@@ -170,7 +171,12 @@ app.post('/login', (req, res) => {
 });
 
 // Route to create group
-app.get('/creategroup', (req, res) => {
+app.get('/creategroup', checkAuth, (req, res) => {
+  if (req.isUSerLoggedIn === false) {
+    res.status(403).redirect('/login');
+    return;
+  }
+
   const userProfile = req.cookies;
 
   const sqlQuery = 'SELECT DISTINCT id, venue_name FROM venues ORDER BY venue_name';
@@ -188,6 +194,11 @@ app.get('/creategroup', (req, res) => {
 });
 
 app.post('/creategroup', (req, res) => {
+  if (req.isUSerLoggedIn === false) {
+    res.status(403).redirect('/login');
+    return;
+  }
+
   const inputData = [req.body.title, req.body.description, req.body.venue_id, req.body.max_capacity, req.cookies.userId, req.body.meeting_date, req.body.meeting_time];
 
   const insertQuery = 'INSERT INTO group_details (title, description, venue_id, max_capacity, creator_id, meeting_date, meeting_time) VALUES ($1, $2, $3, $4, $5, $6, $7)';
@@ -204,7 +215,11 @@ app.post('/creategroup', (req, res) => {
 });
 
 // Route to view group details
-app.get('/group/:id', (req, res) => {
+app.get('/group/:id', checkAuth, (req, res) => {
+  if (req.isUSerLoggedIn === false) {
+    res.status(403).redirect('/login');
+    return;
+  }
   const userProfile = req.cookies;
 
   const groupSelected = [req.params.id];
@@ -252,12 +267,56 @@ app.get('/group/:id', (req, res) => {
           ON a.user_id = b.id
         WHERE a.group_id = $1
       `;
-      pool.query(memberQuery, groupSelected, (memberError, memberResult) => {
-        const mainData = mainResult.rows;
-        const memberData = memberResult.rows;
+      pool
+        .query(memberQuery, groupSelected)
+        .then((memberResult) => {
+          const messageQuery = `
+            SELECT
+              a.*,
+              b.first_name,
+              b.last_name,
+              b.photo
+            FROM messages a
+            LEFT JOIN users b
+              ON a.user_id = b.id
+            WHERE group_id = $1 
+            ORDER BY a.created_at DESC`;
 
-        res.render('singleGroup', { mainData, memberData, userProfile });
-      });
+          pool
+            .query(messageQuery, groupSelected)
+            .then((messageResult) => {
+              const mainData = mainResult.rows;
+              const memberData = memberResult.rows;
+              const messageData = messageResult.rows;
+
+              messageData.forEach((messageRow) => {
+                messageRow.created_at = moment(messageRow.created_at).from();
+              });
+
+              res.render('singleGroup', {
+                mainData, memberData, messageData, userProfile, groupSelected,
+              });
+            })
+            .catch((error) => {
+              console.log('Query error', error.stack);
+              res.status(503).send('Error');
+            });
+        });
+    })
+    .catch((error) => {
+      console.log('Query error', error.stack);
+      res.status(503).send('Error');
+    });
+});
+
+// Route to post messages in groups
+app.post('/group/:id/message', (req, res) => {
+  const sqlQuery = 'INSERT INTO messages (group_id, user_id, message) VALUES ($1, $2, $3)';
+
+  pool
+    .query(sqlQuery, [req.params.id, req.cookies.userId, req.body.message])
+    .then(() => {
+      res.redirect(`/group/${req.params.id}`);
     })
     .catch((error) => {
       console.log('Query error', error.stack);
@@ -266,7 +325,12 @@ app.get('/group/:id', (req, res) => {
 });
 
 // Route to view list of groups user is part of
-app.get('/mygroups', (req, res) => {
+app.get('/mygroups', checkAuth, (req, res) => {
+  if (req.isUSerLoggedIn === false) {
+    res.status(403).redirect('/login');
+    return;
+  }
+
   const userProfile = req.cookies;
 
   const sqlQueryCurrent = `
@@ -354,7 +418,12 @@ app.get('/mygroups', (req, res) => {
 });
 
 // Route for owner to edit group
-app.get('/group/:id/edit', (req, res) => {
+app.get('/group/:id/edit', checkAuth, (req, res) => {
+  if (req.isUSerLoggedIn === false) {
+    res.status(403).redirect('/login');
+    return;
+  }
+
   const userProfile = req.cookies;
 
   const sqlVenueQuery = 'SELECT DISTINCT id, venue_name FROM venues ORDER BY venue_name';
@@ -384,7 +453,12 @@ app.get('/group/:id/edit', (req, res) => {
     });
 });
 
-app.put('/group/:id/edit', (req, res) => {
+app.put('/group/:id/edit', checkAuth, (req, res) => {
+  if (req.isUSerLoggedIn === false) {
+    res.status(403).redirect('/login');
+    return;
+  }
+
   const inputData = [req.body.title, req.body.description, req.body.meeting_date, req.body.meeting_time, req.body.venue_id, req.body.max_capacity, req.params.id];
 
   const sqlQuery = 'UPDATE group_details SET title=$1, description=$2, meeting_date=$3, meeting_time=$4, venue_id=$5, max_capacity=$6 WHERE id=$7';
@@ -401,7 +475,12 @@ app.put('/group/:id/edit', (req, res) => {
 });
 
 // Route for owner to delete group
-app.delete('/group/:id/delete', (req, res) => {
+app.delete('/group/:id/delete', checkAuth, (req, res) => {
+  if (req.isUSerLoggedIn === false) {
+    res.status(403).redirect('/login');
+    return;
+  }
+
   const sqlQuery = 'UPDATE group_details SET is_deleted=TRUE WHERE id=$1';
 
   pool
@@ -416,7 +495,12 @@ app.delete('/group/:id/delete', (req, res) => {
 });
 
 // Route to join group
-app.get('/group/:id/join', (req, res) => {
+app.get('/group/:id/join', checkAuth, (req, res) => {
+  if (req.isUSerLoggedIn === false) {
+    res.status(403).redirect('/login');
+    return;
+  }
+
   const userProfile = req.cookies;
 
   const memberQuery = 'SELECT DISTINCT user_id FROM lunch_groups WHERE group_id = $1';
@@ -451,7 +535,12 @@ app.get('/group/:id/join', (req, res) => {
 });
 
 // Route to leave group
-app.delete('/group/:id/leave', (req, res) => {
+app.delete('/group/:id/leave', checkAuth, (req, res) => {
+  if (req.isUSerLoggedIn === false) {
+    res.status(403).redirect('/login');
+    return;
+  }
+
   const sqlQuery = `
     DELETE FROM lunch_groups WHERE group_id = $1 and user_id = $2
   `;

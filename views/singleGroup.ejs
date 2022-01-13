@@ -1,7 +1,7 @@
 <%- include('header2', {title: 'Group Details'}); %> 
 
 <div class="container">
-  <div class="row">
+  <div class="row mb-5">
     <div class="col">
       <div class="card bg-light">
         <div class="card-header">
@@ -41,6 +41,46 @@
     </div>
   </div>
 
+  <div class="row mb-5">
+  <div class="col-md">
+    <div class="chat_container">
+      <h4>Message Board</h4>
+      <div class="job-box">
+        <div class="inbox-message">
+          <% messageData.forEach((messageRow) => { %>
+            <ul>
+              <li>
+                <a href="#">
+                  <div class="message-avatar">
+                    <img src="/<%= messageRow.photo %>" alt="<%= messageRow.first_name %>">
+                  </div>
+                  <div class="message-body">
+                    <div class="message-body-heading">
+                      <h5><%= messageRow.first_name %> <%= messageRow.last_name %></h5>
+                      <span><%= messageRow.created_at %></span>
+                    </div>
+                    <p><%= messageRow.message %></p>
+                  </div>
+                </a>
+              </li>
+            </ul>
+          <% }); %> 
+          
+        </div>
+      </div>
+
+      <form action="/group/<%= groupSelected[0] %>/message" method="POST">
+        <div class="form-group">
+            <textarea class="form-control mb-3" name="message" placeholder="Enter message..."></textarea>
+
+            <button type="submit" class="btn btn-secondary pull-right">Post</button>
+            <div class="clearfix"></div>
+        </div>
+      </form>
+    </div>
+  </div>
+  </div>
+</div>
 
 
 <%- include('footer'); %> 
